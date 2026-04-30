@@ -65,12 +65,18 @@ computationTime = toc;
 
 %% Visualizing Monte Carlo Data
 
+pf = zeros(5,3);
+failure_condition = 0.95;
+
 for k = 1:3
     figure(k+1)
     for t = 1:layers
         E_normalized{k}(t,:) = sort(E_normalized{k}(t,:));
         loglog(E_normalized{k}(t,:)) 
         hold on
+
+        data = E_normalized{k}(t,:);
+        pf(t,k) = sum(data < failure_condition)/numel(data)*100;
     end
     hold off
 end
