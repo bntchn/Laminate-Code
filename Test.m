@@ -32,7 +32,7 @@ plot(orientations,Ex/E1,'k--')
 legend('Classical Laminate Theory Code', 'Reference [1]', 'Reference [2]')
 xlabel('Orientation, \theta (deg)'); ylabel('Normalized E_1')
 
-%% Monte Carlo Sampling of 1-5 layers
+%% Generating Monte Carlo Data of 1-5 layers
 % using CLT code
 
 layers = 5;
@@ -63,10 +63,34 @@ for k = 1:3
 end
 computationTime = toc;
 
-%% Visualizing Monte Carlo Data
+%% Monte Carlo Data Parameters
 
-pf = zeros(5,3);
+avg = zeros(layers,3);
+standard_dev = zeros(layers,3);
+median = zeros(layers,3);
+int_95 = zeros(layers,3);
+int_99 = zeros(layers,3);
+
 failure_condition = 0.95;
+pf = zeros(layers,3);
+
+for k = 1:3
+    for t = 1:layers
+        E_normalized{k}(t,:) = sort(E_normalized{k}(t,:));
+        data = E_normalized{k}(t,:);
+        
+        avg(t,k) = mean(data);
+        standard_dev(t,k) = std(data);
+        median(t,k) = data(round(length(data)/2));
+        int_95(t,k) = data(round(length(data)/20));
+        int_99(t,k) = data(round(length(data)/100));
+        pf(t,k) = sum(data < failure_condition)/numel(data)*100;
+    end
+end
+
+%% Visualizing Monte Carlo Data
+% this is not a cdf, maybe clarify that with him
+% how could this be turned into a cdf?
 
 for k = 1:3
     figure(k+1)
@@ -74,46 +98,68 @@ for k = 1:3
         E_normalized{k}(t,:) = sort(E_normalized{k}(t,:));
         plot(E_normalized{k}(t,:)) 
         hold on
-
-        data = E_normalized{k}(t,:);
-        pf(t,k) = sum(data < failure_condition)/numel(data)*100;
     end
     hold off
 end
 xlabel('Monte-Carlo Samples'); ylabel('Normalized E_1')
 
 %% Histograms of Monte Carlo Data
+% Talk to Mirzendehdel about this
+
+% would it be worth it to create graphs and characterize my orientaion
+% data?
+
+% what should my bin count be? I have the formula, but should the bin edges
+% start and end where my data is? or should it start and end at 0 and 1.
+% My "distribution" can look differently based on what my bin edges are.
+% what is the best way to map my bin edges?
+
+% what should my y-axis be? should it be pdf probability divided by bin
+% width (graphs with values over 100)? or should it be the probability 
+% that a sample falls in that bin (graphs with 0 to 1)?
+
+% I can use histogram function to make probability, pdf, and cdf graphs
+
+bin_count = 5*10*round((1 + 3.3*log10(sample))/10);
+edges = linspace(0,1,bin_count+1);
 
 for k = 1:3 
     figure(k+4)
     for t = 1:layers
-        subplot(5,1,t)
-        histogram(E_normalized{k}(t,:),0:0.01:1)
-        xlim([min(E_normalized{k}(t,:)),1])
-        ylim([0 sample])
+        subplot(layers,1,t)
+        histogram(E_normalized{k}(t,:),edges,'Normalization','probability')
     end
-    ylabel('Monte-Carlo Samples'); xlabel('Normalized E_1')
-    
+    ylabel('Probability (%)'); xlabel('Normalized E_1')
 end
 
-%% Method of Moments
+%% Matching to a Distribution
+% plotting the most extreme distribution
+% these plots are matching pdf, not probability
 
-avg = zeros(layers,3);
-standard_dev = zeros(layers,3);
-median = zeros(layers,3);
+figure
+data = E_normalized{3}(1,:);
+plot(data)
 
-for k = 1:3
-    for t = 1:layers
-        data = E_normalized{k}(t,:);
-        avg(t,k) = mean(data);
-        standard_dev(t,k) = std(data);
-        median(t,k) = data(round(length(data)/2));
-    end
-end
+omega = 1;          % upper bound
+lambda = 0.3;       % scale parameter (controls spread)
+k = 0.5;            % shape parameter
+x = 0:0.001:0.999;
 
+z = (omega - x) / lambda;
 
-%% Matching to a Beta Distribution
-x = 0:0.1:1;
+f = (k / lambda) .* z.^(k-1) .* exp(-(z.^k));
 
-B 
-% chi-squared and KS test
+figure
+plot(x, f, 'LineWidth', 2)
+xlabel('x')
+ylabel('f(x)')
+title('Reverse Weibull Distribution (bounded at \omega)')
+grid on
+hold on
+histogram(E_normalized{3}(1,:),edges,'Normalization','pdf')
+
+% chi-squared test
+% compare pdf
+
+% KS test
+% compare cdf
