@@ -72,7 +72,7 @@ for k = 1:3
     figure(k+1)
     for t = 1:layers
         E_normalized{k}(t,:) = sort(E_normalized{k}(t,:));
-        loglog(E_normalized{k}(t,:)) 
+        plot(E_normalized{k}(t,:)) 
         hold on
 
         data = E_normalized{k}(t,:);
@@ -88,11 +88,32 @@ for k = 1:3
     figure(k+4)
     for t = 1:layers
         subplot(5,1,t)
-        histogram(E_normalized{k}(t,:),0:0.02:1)
+        histogram(E_normalized{k}(t,:),0:0.01:1)
         xlim([min(E_normalized{k}(t,:)),1])
+        ylim([0 sample])
+    end
+    ylabel('Monte-Carlo Samples'); xlabel('Normalized E_1')
+    
+end
+
+%% Method of Moments
+
+avg = zeros(layers,3);
+standard_dev = zeros(layers,3);
+median = zeros(layers,3);
+
+for k = 1:3
+    for t = 1:layers
+        data = E_normalized{k}(t,:);
+        avg(t,k) = mean(data);
+        standard_dev(t,k) = std(data);
+        median(t,k) = data(round(length(data)/2));
     end
 end
 
-%a;slkdnf;ajbn s;dgvj an;lds nv;aljs
 
+%% Matching to a Beta Distribution
+x = 0:0.1:1;
 
+B 
+% chi-squared and KS test
