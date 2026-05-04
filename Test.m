@@ -2,7 +2,7 @@
 % [1] https://www.sciencedirect.com/science/article/pii/S1359836813005337
 % [2] https://www.sciencedirect.com/science/article/pii/S1110016822008420#b0170
 
-figure(1)
+figure
 hold on
 E1 = 19; E2 = 2; G12 = 1; v12 = 0.3; v21 =  v12*E2/E1;
 thickness = 0.0052;
@@ -93,7 +93,7 @@ end
 % how could this be turned into a cdf?
 
 for k = 1:3
-    figure(k+1)
+    figure
     for t = 1:layers
         E_normalized{k}(t,:) = sort(E_normalized{k}(t,:));
         plot(E_normalized{k}(t,:)) 
@@ -124,7 +124,7 @@ bin_count = 5*10*round((1 + 3.3*log10(sample))/10);
 edges = linspace(0,1,bin_count+1);
 
 for k = 1:3 
-    figure(k+4)
+    figure
     for t = 1:layers
         subplot(layers,1,t)
         histogram(E_normalized{k}(t,:),edges,'Normalization','probability')
@@ -133,12 +133,8 @@ for k = 1:3
 end
 
 %% Matching to a Distribution
-% plotting the most extreme distribution
+% plotting the most extreme distribution, data = E_normalized{3}(1,:)
 % these plots are matching pdf, not probability
-
-figure
-data = E_normalized{3}(1,:);
-plot(data)
 
 omega = 1;          % upper bound
 lambda = 0.3;       % scale parameter (controls spread)
@@ -163,3 +159,17 @@ histogram(E_normalized{3}(1,:),edges,'Normalization','pdf')
 
 % KS test
 % compare cdf
+
+%% FORM
+
+% I do not want to derive the explicit relationship of E1 for the purposes
+% of doing a FORM analysis.
+% P( g < 0 ) , g = E1(normalized, theta1, theta2, theta3...) - 0.95
+% that sounds terrible. I already have an explicit relationship for E1 of
+% one layer as a function of theta, given by Ref [2].
+% I would propose to Dr. Mirzendehdel that I can do this instead. I would
+% compare the time it takes to do a proper monte carlo simulation of 1
+% layer vs HL algorithm of one layer. 
+% This would be for the purpose of showing I know what FORM is.
+
+
