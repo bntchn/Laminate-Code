@@ -63,7 +63,7 @@ for k = 1:3
 end
 computationTime = toc;
 
-%% Monte Carlo Data Parameters
+%% Monte Carlo Data Characterization
 
 avg = zeros(layers,3);
 standard_dev = zeros(layers,3);
@@ -88,37 +88,14 @@ for k = 1:3
     end
 end
 
-%% Visualizing Monte Carlo Data
-% this is not a cdf, maybe clarify that with him
-% how could this be turned into a cdf?
-
-for k = 1:3
-    figure
-    for t = 1:layers
-        E_normalized{k}(t,:) = sort(E_normalized{k}(t,:));
-        plot(E_normalized{k}(t,:)) 
-        hold on
-    end
-    hold off
-end
-xlabel('Monte-Carlo Samples'); ylabel('Normalized E_1')
+T_mean = array2table(avg);
+T_mean.Properties.VariableNames = {'std_1', 'std_2', 'std_3'};
+T_mean.Properties.RowNames = {'1 Plies','2 Plies','3 Plies','4 Plies' ,'5 Plies'};
+disp(T_mean)
 
 %% Histograms of Monte Carlo Data
-% Talk to Mirzendehdel about this
-
-% would it be worth it to create graphs and characterize my orientaion
-% data?
-
-% what should my bin count be? I have the formula, but should the bin edges
-% start and end where my data is? or should it start and end at 0 and 1.
-% My "distribution" can look differently based on what my bin edges are.
-% what is the best way to map my bin edges?
-
-% what should my y-axis be? should it be pdf probability divided by bin
-% width (graphs with values over 100)? or should it be the probability 
-% that a sample falls in that bin (graphs with 0 to 1)?
-
-% I can use histogram function to make probability, pdf, and cdf graphs
+% I can use histogram function to make probability, pdf, and cdf graphs.
+% These are all probability, because it's the easiest for me to read.
 
 bin_count = 5*10*round((1 + 3.3*log10(sample))/10);
 edges = linspace(0,1,bin_count+1);
@@ -136,40 +113,72 @@ end
 % plotting the most extreme distribution, data = E_normalized{3}(1,:)
 % these plots are matching pdf, not probability
 
-omega = 1;          % upper bound
-lambda = 0.3;       % scale parameter (controls spread)
-k = 0.5;            % shape parameter
-x = 0:0.001:0.999;
+data = E_normalized{3}(1,:);
+
+omega = 1;                      % upper bound 
+y = omega - data;               % transform to Wiebell (from reverse Weibell)
+[paramEsts, ~] = wblfit(y);     % MATLAB estimate of Wiebell parameters
+         
+lambda = paramEsts(1);          % scale parameter 
+k = paramEsts(2);               % shape parameter
+x = 0:0.001:0.997;              % not going to one avoids major spike
 
 z = (omega - x) / lambda;
 
-f = (k / lambda) .* z.^(k-1) .* exp(-(z.^k));
+pdf = (k / lambda) .* z.^(k-1) .* exp(-(z.^k));
 
 figure
-plot(x, f, 'LineWidth', 2)
-xlabel('x')
-ylabel('f(x)')
-title('Reverse Weibull Distribution (bounded at \omega)')
+plot(x, pdf, 'k')
+xlabel('Normalized E_1')
+ylabel('Probability Density')
+title('Weibull Distribution (bounded at \omega)')
 grid on
 hold on
-histogram(E_normalized{3}(1,:),edges,'Normalization','pdf')
+histogram(data,edges,'Normalization','pdf','FaceAlpha',0.4)
+hold off
+legend('Weibull PDF','Laminate E_1 PDF')
 
-% chi-squared test
-% compare pdf
+x = 0:0.001:1;
+cdf = exp(-((omega - x)./lambda).^k);
+
+figure
+plot(x, cdf,'k')
+xlabel('Normalized E_1')
+ylabel('Cumulative Density')
+title('Weibull Distribution (bounded at \omega)')
+grid on
+hold on
+histogram(data,edges,'Normalization','cdf','FaceAlpha',0.4)
+hold off
+legend('Weibull CDF','Laminate E_1 CDF')
+
+% chi-square test
+
 
 % KS test
-% compare cdf
+
 
 %% FORM
 
-% I do not want to derive the explicit relationship of E1 for the purposes
-% of doing a FORM analysis.
-% P( g < 0 ) , g = E1(normalized, theta1, theta2, theta3...) - 0.95
-% that sounds terrible. I already have an explicit relationship for E1 of
-% one layer as a function of theta, given by Ref [2].
-% I would propose to Dr. Mirzendehdel that I can do this instead. I would
-% compare the time it takes to do a proper monte carlo simulation of 1
-% layer vs HL algorithm of one layer. 
-% This would be for the purpose of showing I know what FORM is.
+% demonstrate how FORM would be difficult to perform.
+% FORM requires a limit state function to take the TSE of
+% for me, my limit state function would be:
+% g = E1 - 0.95
+% pf = P(g<0)
+% however, g must be a function of two or more randomly distrubuted normal
+% variables. 
+% My only variable is theta for each layer
+% I have an equation explicitly solving for E1 for one layer (it's a big f)
+% I could take the derivative of this function and then complete the
+% hasofer lind algorithm to find the shortest distance.
+% however, with only one degree of freedom, my function and derivative will
+% be very complicated. 
+% I would be wasting my time trying to develop functions for E1 for
+% laminates of multiple layers
+% is there another way to model all of this data in a less computationally
+% expensive manner...?
+
+%% Gaussian Process
+
 
 
