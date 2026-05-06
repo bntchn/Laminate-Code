@@ -63,6 +63,9 @@ for k = 1:3
 end
 computationTime = toc;
 
+figure
+histogram(orientations{1},'Normalization','pdf')
+
 %% Monte Carlo Data Characterization
 
 avg = zeros(layers,3);
@@ -91,7 +94,38 @@ end
 T_mean = array2table(avg);
 T_mean.Properties.VariableNames = {'std_1', 'std_2', 'std_3'};
 T_mean.Properties.RowNames = {'1 Plies','2 Plies','3 Plies','4 Plies' ,'5 Plies'};
+fprintf('Mean Values\n')
 disp(T_mean)
+
+T_std = array2table(standard_dev);
+T_std.Properties.VariableNames = {'std_1', 'std_2', 'std_3'};
+T_std.Properties.RowNames = {'1 Plies','2 Plies','3 Plies','4 Plies' ,'5 Plies'};
+fprintf('Standard Deviation Values\n')
+disp(T_std)
+
+T_med = array2table(median);
+T_med.Properties.VariableNames = {'std_1', 'std_2', 'std_3'};
+T_med.Properties.RowNames = {'1 Plies','2 Plies','3 Plies','4 Plies' ,'5 Plies'};
+fprintf('Median Values\n')
+disp(T_med)
+
+T_95 = array2table(int_95);
+T_95.Properties.VariableNames = {'std_1', 'std_2', 'std_3'};
+T_95.Properties.RowNames = {'1 Plies','2 Plies','3 Plies','4 Plies' ,'5 Plies'};
+fprintf('95%% Confidence Interval Lower Bound\n')
+disp(T_95)
+
+T_99 = array2table(int_99);
+T_99.Properties.VariableNames = {'std_1', 'std_2', 'std_3'};
+T_99.Properties.RowNames = {'1 Plies','2 Plies','3 Plies','4 Plies' ,'5 Plies'};
+fprintf("99%% Confidence Interval Lower Bound\n")
+disp(T_99)
+
+T_pf = array2table(pf);
+T_pf.Properties.VariableNames = {'std_1', 'std_2', 'std_3'};
+T_pf.Properties.RowNames = {'1 Plies','2 Plies','3 Plies','4 Plies' ,'5 Plies'};
+fprintf('Probability of Failure (<95%% E_1)\n')
+disp(T_pf)
 
 %% Histograms of Monte Carlo Data
 % I can use histogram function to make probability, pdf, and cdf graphs.
