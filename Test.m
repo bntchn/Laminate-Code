@@ -2,6 +2,11 @@
 % [1] https://www.sciencedirect.com/science/article/pii/S1359836813005337
 % [2] https://www.sciencedirect.com/science/article/pii/S1110016822008420#b0170
 
+
+set(groot, 'defaultTextInterpreter', 'latex');
+set(groot, 'defaultAxesTickLabelInterpreter', 'latex');
+set(groot, 'defaultLegendInterpreter', 'latex');
+
 figure
 hold on
 E1 = 19; E2 = 2; G12 = 1; v12 = 0.3; v21 =  v12*E2/E1;
@@ -30,7 +35,9 @@ Ex = 1./n;
 plot(orientations,Ex/E1,'k--')
 
 legend('Classical Laminate Theory Code', 'Reference [1]', 'Reference [2]')
-xlabel('Orientation, \theta (deg)'); ylabel('Normalized E_1')
+xlabel('Orientation, $\theta$ (deg)'); ylabel('Normalized $E_1$')
+set(gcf,'color','white')
+
 
 %% Generating Monte Carlo Data of 1-5 layers
 % using CLT code
@@ -96,18 +103,45 @@ T_mean.Properties.VariableNames = {'std_1', 'std_2', 'std_3'};
 T_mean.Properties.RowNames = {'1 Plies','2 Plies','3 Plies','4 Plies' ,'5 Plies'};
 fprintf('Mean Values\n')
 disp(T_mean)
+figure
+for i = 1:3
+    plot(1:1:5,avg(:,i))
+    hold on
+end
+title('Mean Values')
+xlabel('Ply Count'); ylabel('Normalized $E_1$')
+legend('$\sigma_1$','$\sigma_2$','$\sigma_3$')
+set(gcf,'color','white')
 
 T_std = array2table(standard_dev);
 T_std.Properties.VariableNames = {'std_1', 'std_2', 'std_3'};
 T_std.Properties.RowNames = {'1 Plies','2 Plies','3 Plies','4 Plies' ,'5 Plies'};
 fprintf('Standard Deviation Values\n')
 disp(T_std)
+figure
+for i = 1:3
+    plot(1:1:5,standard_dev(:,i))
+    hold on
+end
+title('Standard Deviation')
+xlabel('Ply Count'); ylabel('Normalized $E_1$')
+legend('$\sigma_1$','$\sigma_2$','$\sigma_3$')
+set(gcf,'color','white')
 
 T_med = array2table(median);
 T_med.Properties.VariableNames = {'std_1', 'std_2', 'std_3'};
 T_med.Properties.RowNames = {'1 Plies','2 Plies','3 Plies','4 Plies' ,'5 Plies'};
 fprintf('Median Values\n')
 disp(T_med)
+figure
+for i = 1:3
+    plot(1:1:5,median(:,i))
+    hold on
+end
+title('Median Values')
+xlabel('Ply Count'); ylabel('Normalized $E_1$')
+legend('$\sigma_1$','$\sigma_2$','$\sigma_3$')
+set(gcf,'color','white')
 
 T_95 = array2table(int_95);
 T_95.Properties.VariableNames = {'std_1', 'std_2', 'std_3'};
@@ -126,6 +160,15 @@ T_pf.Properties.VariableNames = {'std_1', 'std_2', 'std_3'};
 T_pf.Properties.RowNames = {'1 Plies','2 Plies','3 Plies','4 Plies' ,'5 Plies'};
 fprintf('Probability of Failure (<95%% E_1)\n')
 disp(T_pf)
+figure
+for i = 1:3
+    plot(1:1:5,pf(:,i))
+    hold on
+end
+title('Probability of Failure')
+xlabel('Ply Count'); ylabel('Normalized $E_1$')
+legend('$\sigma_1$','$\sigma_2$','$\sigma_3$')
+set(gcf,'color','white')
 
 %% Histograms of Monte Carlo Data
 % I can use histogram function to make probability, pdf, and cdf graphs.
@@ -134,13 +177,17 @@ disp(T_pf)
 bin_count = 5*10*round((1 + 3.3*log10(sample))/10);
 edges = linspace(0,1,bin_count+1);
 
-for k = 1:3 
+for k = 1:layers 
     figure
-    for t = 1:layers
-        subplot(layers,1,t)
-        histogram(E_normalized{k}(t,:),edges,'Normalization','probability')
+    for t = 1:3
+        histogram(E_normalized{t}(k,:),edges,'Normalization','probability')
+        hold on
     end
-    ylabel('Probability (%)'); xlabel('Normalized E_1')
+    ylabel('Probability'); xlabel('Normalized $E_1$')
+    legend('$\sigma_1$','$\sigma_2$','$\sigma_3$')
+    set(gcf,'color','white')
+    xlim([0.6 1])
+    title([num2str(k) ' Layers'])
 end
 
 %% Matching to a Distribution
@@ -163,14 +210,16 @@ pdf = (k / lambda) .* z.^(k-1) .* exp(-(z.^k));
 
 figure
 plot(x, pdf, 'k')
-xlabel('Normalized E_1')
+xlabel('Normalized $E_1$')
 ylabel('Probability Density')
-title('Weibull Distribution (bounded at \omega)')
+title('Weibull Distribution of One Layer, $\sigma_1$')
 grid on
 hold on
 histogram(data,edges,'Normalization','pdf','FaceAlpha',0.4)
 hold off
-legend('Weibull PDF','Laminate E_1 PDF')
+legend('Weibull PDF','Laminate $E_3$ PDF')
+set(gcf,'color','white')
+xlim([0.5 1])
 
 x = 0:0.001:1;
 cdf = exp(-((omega - x)./lambda).^k);
@@ -185,6 +234,7 @@ hold on
 histogram(data,edges,'Normalization','cdf','FaceAlpha',0.4)
 hold off
 legend('Weibull CDF','Laminate E_1 CDF')
+set(gcf,'color','white')
 
 % chi-square test
 

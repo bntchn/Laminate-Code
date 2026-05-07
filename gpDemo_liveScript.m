@@ -60,7 +60,7 @@ grid on; %[output:41c67fe7]
 %[text] The noise parameter $\\sigma\_n$ controls how much we trust the measured data.
 ell = 1.2;     % length scale
 sf  = 1.0;     % signal standard deviation
-sn  = 0;    % assumed measurement noise standard deviation
+sn  = 0.25;    % assumed measurement noise standard deviation
 %%
 %[text] ## 3. Plot the Kernel Shape
 %[text] The kernel can be viewed as an influence function centered at one point.
