@@ -1,21 +1,21 @@
 classdef laminateCLT_700
     properties(GetAccess = 'public', SetAccess = 'public')
-        % public read access, but public write access.
-        myMaterialList; % [E1,E2,G12,v12,thickness,alpha] nx6, where n is the number of fiber types,        
+        % public read access, public write access.
+        myMaterialList; % [E1,E2,G12,v12,thickness] nx5, where n is the number of fiber types,        
         myOrientations; % [...] ply orientations, 1xn, n is number of plies, top to bottom.
-        myFibers; % [...] fiber types, 1xn, n is number of plies.
+        myFibers;       % [...] fiber types, 1xn, n is number of plies.
 
-        myPlyNumber; % n, where n is the number of plies
-        myQ; % non-rotated Q matrix.
-        myQbar; % rotated Q matrix, Qbar, for each ply;.
-        myT; % associated rotation matrix, T, for each Qbar.
-        myZ; % [1:n+1], ply layer locations, where n is the number of plies.
-        myABD; % computed ABD matrix.
-        myE1; % laminate E1.
-        myE2; % laminate E2.
-        myG12; % laminate G12.
-        mynu12; % laminate nu12.
-        myThickness; % laminate thickness.
+        myPlyNumber;    % n, where n is the number of plies
+        myQ;            % non-rotated Q matrix.
+        myQbar;         % rotated Q matrix, Qbar, for each ply;.
+        myT;            % associated rotation matrix, T, for each Qbar.
+        myZ;            % [1:n+1], ply layer locations, where n is the number of plies.
+        myABD;          % computed ABD matrix.
+        myE1;           % laminate E1.
+        myE2;           % laminate E2.
+        myG12;          % laminate G12.
+        mynu12;         % laminate nu12.
+        myThickness;    % laminate thickness.
     end
     methods
 
@@ -26,11 +26,21 @@ classdef laminateCLT_700
             obj.myMaterialList = materialList;
             obj.myOrientations = orientations;
             obj.myPlyNumber = length(orientations);
-            % if layers is not given, then assign 1 to all plies
+
+            % ERROR HANDLING:
             if (nargin == 3)
                 obj.myFibers = fibers;
+                if length(fibers) ~= length(orientations)
+                    % fiber length must match orientations
+                    fprintf('Warning: fiber list does not match orientations')
+                end
             else
+                % if layers is not given, then assign 1 to all plies
                 obj.myFibers = ones(1,obj.myPlyNumber);
+            end
+            if length(materialList) ~= 5
+                % if materialList is not fully populated
+                fprintf('Warning: materialList has missing properties')
             end
         end
 
@@ -43,14 +53,14 @@ classdef laminateCLT_700
             obj = obj.stiffness();
         end
 
-%%%%%%% generate a report
+%%%%%%% generate a report with laminate properties
       % obj = laminateCLT(materialList,orientations,fibers);
       % obj = obj.properties;
         function obj = ResultsFile(obj)
             % Open file for writing (overwrite if exists)
             filename = 'Results.txt';
             fid = fopen(filename, 'w');
-
+            % laminate properties report
             fprintf(fid,'LIST OF FIBERS AND PROPERTIES\n');
             fprintf(fid,'-----------------------------\n');
             fprintf(fid,'%-12s %-12s %-12s %-12s %-12s %-12s\n',...
@@ -179,8 +189,6 @@ classdef laminateCLT_700
             obj.mynu12 = -abd(1,2)/abd(1,1);
             obj.myThickness = obj.myZ(end) - obj.myZ(1);
         end
-
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% NOT FUNCTIONAL %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% END OF METHODS %%%%%%%%%%%%%%%%%%%%%%%%%%%

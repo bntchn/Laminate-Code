@@ -1,0 +1,250 @@
+%% Start
+clear all
+clc
+set(groot, 'defaultTextInterpreter', 'latex');
+set(groot, 'defaultAxesTickLabelInterpreter', 'latex');
+set(groot, 'defaultLegendInterpreter', 'latex');
+
+%% Recreating Results from Previous Publications
+% [1] https://www.sciencedirect.com/science/article/pii/S1359836813005337
+% [2] https://www.sciencedirect.com/science/article/pii/S1110016822008420#b0170
+
+E1 = 19; E2 = 2; G12 = 1; v12 = 0.3; v21 =  v12*E2/E1;
+thickness = 0.0052;
+materialList = [E1 E2 G12 v12 thickness];
+orientations = linspace(0,90,91);
+
+% CLT code
+E_modulus = zeros(1,length(orientations));
+for i = 1:length(orientations) 
+    obj = laminateCLT_700(materialList,orientations(i));
+    obj = obj.properties;
+    E_modulus(i) = obj.myE1;
+end
+
+% equation in reference [1]
+Ex1 = E1.*cosd(orientations).^4 + E2.*sind(orientations).^4 + G12.*sind(2.*orientations).^2;
+
+% equation in reference [2]
+n = 1/E1.*(cosd(orientations).^4 - v12.*sind(orientations).^2.*cosd(orientations).^2)...
+    + 1/E2.*(sind(orientations).^4 - v21.*sind(orientations).^2.*cosd(orientations).^2)...
+    + 1/G12.*(sind(orientations).^2.*cosd(orientations).^2);
+Ex2 = 1./n;
+
+figure
+hold on
+plot(orientations,E_modulus/E1,'r') 
+plot(orientations,Ex1/E1,'b')
+plot(orientations,Ex2/E1,'k--')
+legend('Classical Laminate Theory Code', 'Reference [1]', 'Reference [2]')
+xlabel('Orientation, $\theta$ (deg)'); ylabel('Normalized $E_x$')
+set(gcf,'color','white')
+hold off
+
+%% Generating Monte Carlo Data of 1-5 layers
+% using CLT code
+
+layers = 5;             % generates [layers] laminates of 1-[layers] plies
+sample = 1e;           % number of sample points for each ply
+variability = [1 2 3];  % standard deviations away from zero degrees
+                 
+% number of data sets equals layers * length(variability)
+[E_normalized,orientations,computationTime] = ...
+MonteCarlo(layers, sample, variability, materialList);
+
+%% Figure of Orientation PDFs
+
+figure
+hold on
+for i = 1:width(variability)
+    histogram(orientations{i,1},'Normalization','pdf','DisplayStyle',...
+        'stairs','LineWidth',1)
+end
+hold off
+xlabel('Orientation, $\theta$ (deg)'); ylabel('PDF')
+legend('$\sigma_1$','$\sigma_2$','$\sigma_3$')
+set(gcf,'color','white')
+
+%% Histograms of Monte Carlo Data
+
+% bin count equation
+bin_count = 5*10*round((1 + 3.3*log10(sample))/10);
+edges = linspace(0,1,bin_count+1);
+
+% creating histograms
+for k = 1:layers 
+    figure
+    for t = 1:3
+        histogram(E_normalized{t}(k,:),edges,'Normalization','pdf')
+        hold on
+    end
+    ylabel('PDF'); xlabel('Normalized $E_x$')
+    legend('$\sigma_1$','$\sigma_2$','$\sigma_3$')
+    set(gcf,'color','white')
+    xlim([0.6 1]); ylim([0 100])
+end
+
+%% Monte Carlo Data Characterization
+
+% arbitrary failure condition
+failure_condition = 0.95;
+dataCharacterization = dataCharacteristics(layers,variability,E_normalized,failure_condition);
+
+% figures of data types in order of list in dataCharacteristics{1}
+for i = 2:7
+    figure
+    data = dataCharacterization{i};
+    dataProcessing(data)
+    if i == 7
+        ylabel('Probability ($\%$)')
+    end
+end
+
+%% Matching to a Distribution
+% plotting the most extreme distribution, data = E_normalized{3}(1,:)
+
+data = E_normalized{3}(1,:);
+
+omega = 1;                      % upper bound 
+y = omega - data;               % transform to Wiebell (from reverse Weibell)
+y(y == 0) = 0.001;              % adjusting data for wblfit() function
+[paramEsts, ~] = wblfit(y);     % MATLAB estimate of Wiebell parameters
+         
+lambda = paramEsts(1);          % scale parameter 
+k = paramEsts(2);               % shape parameter
+x = 0:0.001:0.997;              % adjusted for data presentation
+
+z = (omega - x) / lambda;
+pdf = (k / lambda) .* z.^(k-1) .* exp(-(z.^k));
+
+figure
+plot(x, pdf, 'k')
+xlabel('Normalized $E_x$')
+ylabel('PDF')
+hold on
+histogram(data,edges,'Normalization','pdf','FaceAlpha',0.4)
+hold off
+legend('Weibull PDF','1-Ply, 3-deg PDF')
+set(gcf,'color','white')
+xlim([0.5 1])
+
+x = 0:0.001:1;
+cdf = exp(-((omega - x)./lambda).^k);
+
+figure
+plot(x, cdf,'k')
+xlabel('Normalized $E_x$')
+ylabel('CDF')
+hold on
+histogram(data,edges,'Normalization','cdf','FaceAlpha',0.4)
+hold off
+legend('Weibull CDF','1-Ply, 3-deg CDF')
+set(gcf,'color','white')
+xlim([0.5 1])
+
+%% FORM
+% solving for a single variable, comparing to single-ply, 3-deg deviation
+Z = 0:0.01:3.5;
+n2 = 1/E1.*(cosd(3*Z).^4 - v12.*sind(3*Z).^2.*cosd(3*Z).^2)...
+    + 1/E2.*(sind(3*Z).^4 - v21.*sind(3*Z).^2.*cosd(3*Z).^2)...
+    + 1/G12.*(sind(3*Z).^2.*cosd(3*Z).^2);
+Ex_form = 1./n2/E1;
+
+id = 1;
+g = 0.05;
+while g > 0
+    g = Ex_form(id) - 0.95;
+    id = id + 1;
+end
+Zscore = Z(id);
+
+% probability of failure without Breitung correction
+Pf_form = normcdf(-Zscore);
+
+%% Gaussian Process
+
+%% FUNCTIONS
+
+% Monte-Carlo experimental setup
+function [E_normalized, orientations,computationTime] = ...
+          MonteCarlo(layers, sample, variability, materialList)
+
+    E_normalized = cell(1,3);
+    E_modulus = zeros(layers,sample);
+    z = zeros(layers,sample);
+    theta = zeros(layers,sample);
+    orientations = cell(3,layers);
+    E1 = materialList(1);
+
+    % 15 sets of data, width(variability) * layers
+    tic
+    for k = 1:length(variability)
+        for t = 1:layers
+            z(t,:) = randn(1,sample);
+            theta(t,:) = 0 + variability(k)*z(t,:);
+            for q = 1:t
+                orientations{k,t}(q,:) = theta(q,:);
+            end
+            for i = 1:sample 
+                % implementation of CLT code
+                obj = laminateCLT_700(materialList,orientations{k,t}(:,i));
+                obj = obj.properties;
+                % normalizing elastic modulus
+                E_modulus(t,i) = obj.myE1/E1;
+            end
+        end
+        E_normalized{k} = E_modulus;
+    end
+    computationTime = toc;
+end
+
+% data charicterization function
+function dataCharacterization = ...
+    dataCharacteristics(layers,variability,E_normalized,failure_condition)
+
+    w = width(variability);
+    avg = zeros(layers,3);
+    standard_dev = zeros(layers,w);
+    median = zeros(layers,w);
+    int_95 = zeros(layers,w);
+    int_99 = zeros(layers,w);
+    pf = zeros(layers,w);
+
+    % places tracked data in a cell
+    dataCharacterization = cell(1,7);
+    for k = 1:w
+        for t = 1:layers
+            E_normalized{k}(t,:) = sort(E_normalized{k}(t,:));
+            data = E_normalized{k}(t,:);
+        
+            avg(t,k) = mean(data);
+            standard_dev(t,k) = std(data);
+            median(t,k) = data(round(length(data)/2));
+            int_95(t,k) = data(round(length(data)/20));
+            int_99(t,k) = data(round(length(data)/100));
+            pf(t,k) = sum(data < failure_condition)/numel(data)*100;
+        end
+    end
+
+    dataCharacterization{1} = {'Mean','Standard Dev', 'Median', ...
+        '95\% Confidence', '99\% Confidence', 'Probability of Failure'};
+    dataCharacterization{2} = avg;
+    dataCharacterization{3} = standard_dev;
+    dataCharacterization{4} = median;
+    dataCharacterization{5} = int_95;
+    dataCharacterization{6} = int_99;
+    dataCharacterization{7} = pf;
+end
+
+% generate data figures
+function dataProcessing(data)
+    w = width(data);
+    z = height(data);
+    for j = 1:w
+        plot(1:1:z,data(:,j),'o-')
+        hold on
+    end
+    xlabel('Ply Count'); ylabel('Normalized $E_x$')
+    legend('$\sigma_1$','$\sigma_2$','$\sigma_3$')
+    set(gcf,'color','white')
+end
