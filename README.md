@@ -31,3 +31,10 @@ This tool was developed to perform a sensitivity analysis of composite laminates
 ```text
 laminateCLT_700.m    % Main CLT MATLAB class
 RunMe.m              % Script used to generate Monte-Carlo data and post-processing
+
+---
+
+#  Acknowledgement
+
+```text
+Portions of this project were developed with assistance from ChatGPT, an AI language model developed by OpenAI.
