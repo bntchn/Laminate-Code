@@ -30,7 +30,7 @@ This tool was developed to perform a sensitivity analysis of composite laminates
 
 ```text
 laminateCLT_700.m    % Main CLT MATLAB class
-RunMe.m              % Script used to generate Monte-Carlo data and post-processing
+Test.m               % Script used to generate Monte-Carlo data and post-processing
 ```
 
 ---
