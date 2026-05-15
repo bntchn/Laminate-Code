@@ -5,6 +5,17 @@ set(groot, 'defaultTextInterpreter', 'latex');
 set(groot, 'defaultAxesTickLabelInterpreter', 'latex');
 set(groot, 'defaultLegendInterpreter', 'latex');
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+sample = 1e6;           % number of sample points for Monte-Carlo
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% this value determines the run time of this code. 
+% 1e4 ~ 20 seconds
+% 1e5 ~ 3 minutes
+% 1e6 ~ 30 minutes
+
 %% Recreating Results from Previous Publications
 % [1] https://www.sciencedirect.com/science/article/pii/S1359836813005337
 % [2] https://www.sciencedirect.com/science/article/pii/S1110016822008420#b0170
@@ -45,7 +56,6 @@ hold off
 % using CLT code
 
 layers = 5;             % generates [layers] laminates of 1-[layers] plies
-sample = 1e6;           % number of sample points for each ply
 variability = [1 2 3];  % standard deviations away from zero degrees
                  
 % number of data sets equals layers * length(variability)
