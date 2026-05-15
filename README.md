@@ -31,10 +31,139 @@ This tool was developed to perform a sensitivity analysis of composite laminates
 ```text
 laminateCLT_700.m    % Main CLT MATLAB class
 RunMe.m              % Script used to generate Monte-Carlo data and post-processing
+```
 
 ---
 
-#  Acknowledgement
+# Inputs
+
+<details>
+<summary>Material List</summary>
+
+`materialList` is an \(n \times 5\) matrix:
+
+```matlab
+[E1, E2, G12, nu12, thickness]
+```
+
+Each row corresponds to a unique fiber material.
+
+Example:
+
+```matlab
+materialList = [
+    19e6  2e6  1e6  0.3  0.005
+];
+```
+
+</details>
+
+---
+
+<details>
+<summary>Ply Orientations</summary>
+
+Ply angles in degrees:
+
+```matlab
+orientations = [0 45 -45 90];
+```
+
+</details>
+
+---
+
+<details>
+<summary>Fiber Assignments</summary>
+
+Defines which material row is used for each ply:
+
+```matlab
+fibers = [1 1 1 1];
+```
+
+</details>
+
+---
+
+# Example Usage
+
+<details>
+<summary>Click to expand example</summary>
+
+```matlab
+materialList = [
+    19e6  2e6  1e6  0.3  0.005
+];
+
+orientations = [0 45 -45 90];
+fibers = [1 1 1 1];
+
+% Create laminate object
+laminate = laminateCLT_700(materialList,orientations,fibers);
+
+% Compute laminate properties
+laminate = laminate.properties();
+
+% Generate results file
+laminate = laminate.ResultsFile();
+```
+
+</details>
+
+---
+
+# Outputs
+
+The program computes:
+
+- Ply stiffness matrices
+- Rotated stiffness matrices
+- Transformation matrices
+- Ply z-locations
+- ABD matrix
+- Effective laminate properties
+
+A formatted report is automatically generated:
 
 ```text
-Portions of this project were developed with assistance from ChatGPT, an AI language model developed by OpenAI.
+Results.txt
+```
+
+---
+
+# Current Capabilities
+
+- Symmetric and asymmetric laminates
+- Multiple material systems
+- Arbitrary stacking sequences
+- Automated laminate stiffness calculations
+
+---
+
+# Planned Improvements
+
+- Failure criteria implementation
+  - Maximum stress
+  - Maximum strain
+- Thermal loading effects
+- Progressive ply failure
+
+---
+
+# References
+
+- Jones, R. M. *Mechanics of Composite Materials*
+- Classical Lamination Theory (CLT)
+
+---
+
+# Acknowledgments
+
+Portions of this project documentation and development were completed with assistance from ChatGPT, an AI language model developed by OpenAI.
+
+---
+
+# License
+
+This project is open-source and intended for educational and research purposes.
