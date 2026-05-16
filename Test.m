@@ -13,7 +13,7 @@ sample = 1e6;           % number of sample points for Monte-Carlo
 
 % this value determines the run time of this code. 
 % 1e4 ~ 20 seconds
-% 1e5 ~ 3 minutes
+% 1e5 ~ 3 minutes               <- for my computer...
 % 1e6 ~ 30 minutes
 
 %% Recreating Results from Previous Publications
