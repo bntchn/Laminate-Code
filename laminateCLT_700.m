@@ -45,7 +45,7 @@ classdef laminateCLT_700
         end
 
 %%%%%%% calculating the laminate properties 
-      % obj = laminateCLT(materialList,orientations,fibers);
+      % obj = laminateCLT_700(materialList,orientations,fibers);
         function obj = properties(obj)
             obj = obj.Qmatrices();
             obj = obj.zPositions();

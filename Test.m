@@ -154,25 +154,14 @@ set(gcf,'color','white')
 xlim([0.5 1])
 
 %% FORM
-% solving for a single variable, comparing to single-ply, 3-deg deviation
-Z = 0:0.01:3.5;
-n2 = 1/E1.*(cosd(3*Z).^4 - v12.*sind(3*Z).^2.*cosd(3*Z).^2)...
-    + 1/E2.*(sind(3*Z).^4 - v21.*sind(3*Z).^2.*cosd(3*Z).^2)...
-    + 1/G12.*(sind(3*Z).^2.*cosd(3*Z).^2);
-Ex_form = 1./n2/E1;
 
-id = 1;
-g = 0.05;
-while g > 0
-    g = Ex_form(id) - 0.95;
-    id = id + 1;
-end
-Zscore = Z(id);
+% implementing Hasover Lind algorithm
+%[beta, zStar, pf_form,nFunctionEvals,flag,g_form,grad_g] = HL1D(@(zBar)gFunction(zBar))
 
-% probability of failure without Breitung correction
-Pf_form = normcdf(-Zscore);
-
-%% Gaussian Process
+% THIS FUNCTION DOES NOT WORK
+% it was an attempt at HL that outputs fake values. I am assuming it is
+% something to do with the gradient, but I do not know what is wrong at
+% this point.
 
 %% FUNCTIONS
 
@@ -258,4 +247,59 @@ function dataProcessing(data)
     xlabel('Ply Count'); ylabel('Normalized $E_x$')
     legend('$\sigma_1$','$\sigma_2$','$\sigma_3$')
     set(gcf,'color','white')
+end
+
+%%%%%%%%%%%%% NOT FUNCTIONAL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% limit state function
+function [g,grad_g] = gFunction(zBar)
+    z = zBar;
+    v = 3;  % standard deviation chosen to test
+
+    % limit state: g = E(z) - 0.95
+    n = 1/19*(cosd(v*z)^4 - 0.3*sind(v*z)^2*cosd(v*z)^2)...
+    + 1/2*(sind(v*z)^4 - 0.0316*sind(v*z)^2*cosd(v*z)^2)...
+    + 1/1*(sind(v*z)^2*cosd(v*z)^2);
+    g = 1/n/19 - 0.95;
+
+    % derivative of limit state
+    grad_g = -1444/19*...
+             (-0.63157*cosd(3*z)^3*sind(3*z)+2.90523*sind(6*z)*cosd(6*z)...
+             +6*sind(3*z)^3*cosd(3*z))/...
+             (2*cosd(3*z)^4+36.7996*sind(3*z)^2*cosd(3*z)^2+19*sind(3*z)^4);
+end
+
+% FORM algorithm for 1D
+function [beta, zStar, pf,nFunctionEvals,flag,g,grad_g] = ...
+    HL1D(gFunction,relBetaError,maxFunctionEvals)
+% 2D implementation of Hasofer-Lind Algorithm
+if (nargin == 1)
+    relBetaError = 0.00001; % 1 percent error in beta accepted
+    maxFunctionEvals = 1000;
+end
+if (nargin == 2)
+    maxFunctionEvals = 1000;
+end
+betaOld = 1; % initialize reliability index
+zBar = 1.5; % initial guess
+nFunctionEvals = 0; % keep track of funcion calls
+flag = 1; % flag = 1 means we have converged.
+while (1) % to avoid infinite loops
+    [g,grad_g] = gFunction(zBar);
+    nFunctionEvals = nFunctionEvals+3; % count 1 for g and 2 for gradient
+    a1 = grad_g;
+    a0 = g - a1*zBar;
+    betaNew = a0/a1; % update based on linear approximation
+    zBar = -a0/a1;
+    if (abs(betaNew-betaOld)/betaNew < relBetaError) % we have converged 
+        break;
+    end
+    if (nFunctionEvals > maxFunctionEvals) % to avoid infinite loop
+        flag = 0; % we have not converged.
+        break;
+    end
+    betaOld = betaNew;
+end
+beta = abs(betaNew);
+zStar = zBar;
+pf = normcdf(-beta);
 end
